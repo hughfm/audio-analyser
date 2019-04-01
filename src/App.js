@@ -32,7 +32,15 @@ const useAnalyser = (ctx) => {
   return analyserNodeRef.current;
 };
 
-const createDrawFunction = ({ canvasCtx, analyser, dataArray, width, height, bufferLength }) => {
+const createDrawFunction = ({
+  canvasCtx,
+  analyser,
+  dataArray,
+  width,
+  height,
+  bufferLength,
+  audioEl,
+}) => {
   const draw = () => {
     requestAnimationFrame(draw);
 
@@ -51,6 +59,11 @@ const createDrawFunction = ({ canvasCtx, analyser, dataArray, width, height, buf
 
     // CALCULATE BIN WIDTH
     const sliceWidth = width * 1.0 / (bufferLength + 1);
+
+    // DRAW PLAYHEAD
+    const progress = audioEl.currentTime / audioEl.duration;
+    canvasCtx.moveTo(progress * width, 0);
+    canvasCtx.lineTo(progress * width, height);
 
     // MOVE LINE TO STARTING POINT
     let x = 0;
@@ -90,8 +103,8 @@ const createDrawFunction = ({ canvasCtx, analyser, dataArray, width, height, buf
   return draw;
 };
 
-const bg = '#ecd078';
-const fg = '#605063';
+const bg = '#000';
+const fg = '#fff';
 
 const App = () => {
   const audioEl = useRef(null);
@@ -110,18 +123,26 @@ const App = () => {
       dataArray.current = new Uint8Array(analyserNode.frequencyBinCount);
     }
 
-    if (!rafId.current && canvasElement.current) {
+    if (!rafId.current && canvasElement.current && audioEl.current) {
+      const canvasCtx = canvasElement.current.getContext('2d');
+      canvasCtx.canvas.height = window.innerHeight;
+      canvasCtx.canvas.width = window.innerWidth;
+
       rafId.current = window.requestAnimationFrame(createDrawFunction({
         analyser: analyserNode,
-        canvasCtx: canvasElement.current.getContext('2d'),
+        canvasCtx,
         width: canvasElement.current.width,
         height: canvasElement.current.height,
         dataArray: dataArray.current,
         bufferLength: analyserNode.frequencyBinCount,
+        audioEl: audioEl.current,
       }));
     }
 
-    return () => {/* cleanup */};
+    return () => {
+      window.cancelAnimationFrame(rafId.current);
+      rafId.current = null;
+    };
   });
 
   useEffect(() => {
@@ -140,29 +161,24 @@ const App = () => {
   });
 
   return (
-    <div>
-      <h1>Web Audio API</h1>
-
+    <div
+      onKeyDown={(e) => {
+        if (e.keyCode !== 32) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (audioEl.current.paused) {
+          audioEl.current.play();
+        } else {
+          audioEl.current.pause();
+        }
+      }}
+      tabIndex="0"
+    >
       <audio
         ref={audioEl}
         controls={false}
         id="audio"
-        src="crusade-mkii.mp3"
+        src="agust.mp3"
       ></audio>
-
-      <button
-        id="play"
-        onClick={() => {
-          if (audioCtx.state === 'suspended') audioCtx.resume();
-          if (audioEl.current.paused) {
-            audioEl.current.play();
-          } else {
-            audioEl.current.pause();
-          }
-        }}
-      >
-        Play/Pause
-      </button>
 
       <input
         value={gainValue}
@@ -173,6 +189,7 @@ const App = () => {
         min="0"
         max="1"
         step=".1"
+        style={{ display: 'none' }}
       />
 
       <canvas
@@ -180,7 +197,12 @@ const App = () => {
         id="canvas"
         width="1300"
         height="500"
-        style={{ border: '1px solid' }}
+        style={{
+          border: '1px solid',
+          position: 'fixed',
+          top: '0',
+          left: '0',
+        }}
       ></canvas>
     </div>
   );
