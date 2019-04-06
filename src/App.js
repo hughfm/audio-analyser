@@ -36,12 +36,12 @@ const createDrawFunction = ({
   canvasCtx,
   analyser,
   dataArray,
-  width,
-  height,
   bufferLength,
   audioEl,
 }) => {
   const draw = () => {
+    const width = canvasCtx.canvas.width;
+    const height = canvasCtx.canvas.height;
     requestAnimationFrame(draw);
 
     analyser.getByteFrequencyData(dataArray);
@@ -49,6 +49,13 @@ const createDrawFunction = ({
     // CLEAR SCREEN
     canvasCtx.fillStyle = bg;
     canvasCtx.fillRect(0, 0, width, height);
+
+    // FILL LOAD STATE
+    const loadProgress = audioEl.buffered.length
+      ? audioEl.buffered.end(0) / audioEl.duration
+      : 0;
+    canvasCtx.fillStyle = '#333';
+    canvasCtx.fillRect(0, 0, width * loadProgress, height);
 
     // SET LINE STYLE
     canvasCtx.lineWidth = 1;
@@ -117,6 +124,22 @@ const App = () => {
   const audioGraphConnected = useRef(false);
   const dataArray = useRef(null);
   const rafId = useRef(null);
+  const searchParams = new URLSearchParams(window.location.search);
+  const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0');
+
+  useEffect(() => {
+    const resizeCanvas = () => {
+      const canvasCtx = canvasElement.current.getContext('2d');
+      canvasCtx.canvas.height = window.innerHeight;
+      canvasCtx.canvas.width = window.innerWidth;
+    };
+
+    window.addEventListener('resize', resizeCanvas);
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
 
   useEffect(() => {
     if (!dataArray.current) {
@@ -173,11 +196,41 @@ const App = () => {
       }}
       tabIndex="0"
     >
+      <div
+        style={{
+          position: 'fixed',
+          top: '48px',
+          left: '0',
+          right: '0',
+          zIndex: '10',
+        }}
+      >
+        <input
+          type="text"
+          value={audioUrl}
+          onChange={({ target }) => setAudioUrl(target.value)}
+          style={{
+            fontSize: '16px',
+            textAlign: 'center',
+            borderRadius: '8px',
+            border: 'none',
+            padding: '16px',
+            fontFamily: 'Montserrat',
+            margin: '0 auto',
+            display: 'block',
+            width: '70%',
+            backgroundColor: 'white',
+            color: 'black',
+          }}
+        />
+      </div>
+
       <audio
         ref={audioEl}
         controls={false}
         id="audio"
-        src="agust.mp3"
+        src={audioUrl}
+        crossOrigin="anonymous"
       ></audio>
 
       <input
