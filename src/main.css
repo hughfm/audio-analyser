@@ -1,0 +1,59 @@
+.canvas {
+  border: 1px solid;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.volumeControl {
+  z-index: 10;
+  position: fixed;
+  top: 10%;
+  right: 16px;
+  height: 80%;
+  width: 16px;
+  -webkit-appearance: slider-vertical;
+}
+
+.topBar {
+  position: fixed;
+  top: 48px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  padding: 0 24px;
+}
+
+.urlInput {
+  font-size: 16px;
+  font-family: Montserrat;
+  text-align: center;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0 auto;
+  display: block;
+  background-color: white;
+  color: black;
+  flex: 1;
+  border: none;
+}
+
+.playPause {
+  color: white;
+  font-size: 16px;
+  font-family: Montserrat;
+  min-width: 120px;
+  padding: 0 24px;
+  margin: 0 24px;
+  border-radius: 8px;
+  border: none;
+}
+
+.paused {
+  background-color: rgba(0, 150, 0, 0.7);
+}
+
+.playing {
+  background-color: rgba(150, 0, 0, 0.7);
+}

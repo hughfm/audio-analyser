@@ -1,36 +1,8 @@
 import { AudioContext } from './index.js';
+import useGain from './useGain.js';
+import useAnalyser from './useAnalyser.js';
 
 const { useRef, useContext, useEffect, useState } = React;
-
-const useGain = (ctx) => {
-  const gainNodeRef = useRef();
-
-  if (!gainNodeRef.current) gainNodeRef.current = ctx.createGain();
-
-  const { current: gainNode } = gainNodeRef;
-  const [gainValue, setGainValue] = useState(gainNode.gain.value);
-
-  return [
-    gainNode,
-    gainValue,
-    (value) => {
-      gainNode.gain.value = value;
-      setGainValue(value);
-    },
-  ];
-};
-
-const useAnalyser = (ctx) => {
-  const analyserNodeRef = useRef();
-
-  if (!analyserNodeRef.current) {
-    analyserNodeRef.current = ctx.createAnalyser();
-    analyserNodeRef.current.fftSize = Math.pow(2, 11);
-    analyserNodeRef.current.smoothingTimeConstant = 0.85;
-  }
-
-  return analyserNodeRef.current;
-};
 
 const createDrawFunction = ({
   canvasCtx,
@@ -47,7 +19,7 @@ const createDrawFunction = ({
     analyser.getByteFrequencyData(dataArray);
 
     // CLEAR SCREEN
-    canvasCtx.fillStyle = bg;
+    canvasCtx.fillStyle = 'black';
     canvasCtx.fillRect(0, 0, width, height);
 
     // FILL LOAD STATE
@@ -59,7 +31,7 @@ const createDrawFunction = ({
 
     // SET LINE STYLE
     canvasCtx.lineWidth = 1;
-    canvasCtx.strokeStyle = fg;
+    canvasCtx.strokeStyle = 'white';
 
     // BEGIN
     canvasCtx.beginPath();
@@ -110,22 +82,21 @@ const createDrawFunction = ({
   return draw;
 };
 
-const bg = '#000';
-const fg = '#fff';
+const AGUST_URL = 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0';
 
 const App = () => {
   const audioEl = useRef(null);
   const volumeElement = useRef(null);
   const canvasElement = useRef(null);
   const audioCtx = useContext(AudioContext);
-  const [trackNode, setTrackNode] = useState(null);
-  const [gainNode, gainValue, setGainValue] = useGain(audioCtx);
+  const trackNode = useRef(null);
+  const [gainNode, setGainValue] = useGain(audioCtx);
   const analyserNode = useAnalyser(audioCtx);
   const audioGraphConnected = useRef(false);
   const dataArray = useRef(null);
   const rafId = useRef(null);
   const searchParams = new URLSearchParams(window.location.search);
-  const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0');
+  const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
@@ -170,23 +141,35 @@ const App = () => {
   });
 
   useEffect(() => {
-    if (!trackNode) setTrackNode(audioCtx.createMediaElementSource(audioEl.current));
+    if (!trackNode.current && audioEl.current) {
+      trackNode.current = audioCtx.createMediaElementSource(audioEl.current);
+    }
 
-    if (!audioGraphConnected.current && trackNode) {
-      trackNode.connect(gainNode);
+    return () => {};
+  });
+
+  useEffect(() => {
+    if (!audioGraphConnected.current && trackNode.current) {
+      trackNode.current.connect(gainNode);
       gainNode.connect(analyserNode);
       analyserNode.connect(audioCtx.destination);
 
       audioGraphConnected.current = true;
     }
 
-    return () => {/* cleanup */};
-  });
+    return () => {
+      trackNode.current.disconnect();
+      gainNode.disconnect();
+      analyserNode.disconnect();
+
+      audioGraphConnected.current = false;
+    };
+  }, []);
 
   return (
     <div
       onKeyDown={(e) => {
-        if (e.keyCode !== 32) return;
+        if (e.keyCode !== 32 || e.target.tagName === 'BUTTON') return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
         if (audioEl.current.paused) {
           audioEl.current.play();
@@ -198,47 +181,17 @@ const App = () => {
       }}
       tabIndex="0"
     >
-      <div
-        style={{
-          position: 'fixed',
-          top: '48px',
-          left: '0',
-          right: '0',
-          zIndex: '10',
-          display: 'flex',
-          padding: '0 24px',
-        }}
-      >
+      <div className="topBar">
         <input
           type="text"
           value={audioUrl}
           onChange={({ target }) => setAudioUrl(target.value)}
-          style={{
-            fontSize: '16px',
-            fontFamily: 'Montserrat',
-            textAlign: 'center',
-            borderRadius: '8px',
-            border: 'none',
-            padding: '16px',
-            margin: '0 auto',
-            display: 'block',
-            backgroundColor: 'white',
-            color: 'black',
-            display: 'block',
-            flex: '1',
-          }}
+          className="urlInput"
         />
         <button
-          style={{
-            backgroundColor: 'white',
-            color: 'black',
-            fontSize: '16px',
-            fontFamily: 'Montserrat',
-            minWidth: '100px',
-            padding: '0 24px',
-            margin: '0 24px',
-            borderRadius: '8px',
-          }}
+          className={
+            `playPause ${!audioEl.current || audioEl.current.paused ? "paused" : "playing"}`
+          }
           onClick={() => {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (audioEl.current.paused) {
@@ -250,7 +203,7 @@ const App = () => {
             }
           }}
         >
-          {audioEl.current && audioEl.current.paused ? 'Play' : 'Pause'}
+          {!audioEl.current || audioEl.current.paused ? 'Play' : 'Pause'}
         </button>
       </div>
 
@@ -263,7 +216,8 @@ const App = () => {
       ></audio>
 
       <input
-        value={gainValue}
+        className="volumeControl"
+        value={gainNode.gain.value}
         onChange={e => setGainValue(e.target.value)}
         ref={volumeElement}
         type="range"
@@ -271,28 +225,12 @@ const App = () => {
         min="0"
         max="1"
         step=".01"
-        style={{
-          zIndex: '10',
-          position: 'fixed',
-          top: '10%',
-          right: '16px',
-          height: '80%',
-          width: '16px',
-          WebkitAppearance: 'slider-vertical',
-        }}
       />
 
       <canvas
+        className="canvas"
         ref={canvasElement}
         id="canvas"
-        width="1300"
-        height="500"
-        style={{
-          border: '1px solid',
-          position: 'fixed',
-          top: '0',
-          left: '0',
-        }}
       ></canvas>
     </div>
   );
