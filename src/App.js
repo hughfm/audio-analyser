@@ -172,10 +172,9 @@ const App = () => {
     if (!trackNode) setTrackNode(audioCtx.createMediaElementSource(audioEl.current));
 
     if (!audioGraphConnected.current && trackNode) {
-      trackNode
-        .connect(gainNode)
-        .connect(analyserNode)
-        .connect(audioCtx.destination);
+      trackNode.connect(gainNode);
+      gainNode.connect(analyserNode);
+      analyserNode.connect(audioCtx.destination);
 
       audioGraphConnected.current = true;
     }
