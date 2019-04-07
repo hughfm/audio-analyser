@@ -126,6 +126,7 @@ const App = () => {
   const rafId = useRef(null);
   const searchParams = new URLSearchParams(window.location.search);
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0');
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     const resizeCanvas = () => {
@@ -189,8 +190,10 @@ const App = () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         if (audioEl.current.paused) {
           audioEl.current.play();
+          setPlaying(true);
         } else {
           audioEl.current.pause();
+          setPlaying(false);
         }
       }}
       tabIndex="0"
@@ -202,6 +205,8 @@ const App = () => {
           left: '0',
           right: '0',
           zIndex: '10',
+          display: 'flex',
+          padding: '0 24px',
         }}
       >
         <input
@@ -210,18 +215,43 @@ const App = () => {
           onChange={({ target }) => setAudioUrl(target.value)}
           style={{
             fontSize: '16px',
+            fontFamily: 'Montserrat',
             textAlign: 'center',
             borderRadius: '8px',
             border: 'none',
             padding: '16px',
-            fontFamily: 'Montserrat',
             margin: '0 auto',
             display: 'block',
-            width: '70%',
             backgroundColor: 'white',
             color: 'black',
+            display: 'block',
+            flex: '1',
           }}
         />
+        <button
+          style={{
+            backgroundColor: 'white',
+            color: 'black',
+            fontSize: '16px',
+            fontFamily: 'Montserrat',
+            minWidth: '100px',
+            padding: '0 24px',
+            margin: '0 24px',
+            borderRadius: '8px',
+          }}
+          onClick={() => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (audioEl.current.paused) {
+              audioEl.current.play();
+              setPlaying(true);
+            } else {
+              audioEl.current.pause();
+              setPlaying(false);
+            }
+          }}
+        >
+          {audioEl.current && audioEl.current.paused ? 'Play' : 'Pause'}
+        </button>
       </div>
 
       <audio
@@ -240,8 +270,16 @@ const App = () => {
         id="volume"
         min="0"
         max="1"
-        step=".1"
-        style={{ display: 'none' }}
+        step=".01"
+        style={{
+          zIndex: '10',
+          position: 'fixed',
+          top: '10%',
+          right: '16px',
+          height: '80%',
+          width: '16px',
+          WebkitAppearance: 'slider-vertical',
+        }}
       />
 
       <canvas
