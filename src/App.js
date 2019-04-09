@@ -85,7 +85,7 @@ const createDrawFunction = ({
 const AGUST_URL = 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0';
 
 const App = () => {
-  const audioEl = useRef(null);
+  const audioElement = useRef(null);
   const volumeElement = useRef(null);
   const canvasElement = useRef(null);
   const audioCtx = useContext(AudioContext);
@@ -111,14 +111,14 @@ const App = () => {
     return () => {
       window.removeEventListener('resize', resizeCanvas);
     };
-  }, []);
+  }, [canvasElement]);
 
   useEffect(() => {
     if (!dataArray.current) {
       dataArray.current = new Uint8Array(analyserNode.frequencyBinCount);
     }
 
-    if (!rafId.current && canvasElement.current && audioEl.current) {
+    if (!rafId.current && canvasElement.current && audioElement.current) {
       const canvasCtx = canvasElement.current.getContext('2d');
       canvasCtx.canvas.height = window.innerHeight;
       canvasCtx.canvas.width = window.innerWidth;
@@ -130,7 +130,7 @@ const App = () => {
         height: canvasElement.current.height,
         dataArray: dataArray.current,
         bufferLength: analyserNode.frequencyBinCount,
-        audioEl: audioEl.current,
+        audioEl: audioElement.current,
       }));
     }
 
@@ -138,11 +138,11 @@ const App = () => {
       window.cancelAnimationFrame(rafId.current);
       rafId.current = null;
     };
-  });
+  }, [dataArray, analyserNode, rafId, canvasElement, audioElement]);
 
   useEffect(() => {
-    if (!trackNode.current && audioEl.current) {
-      trackNode.current = audioCtx.createMediaElementSource(audioEl.current);
+    if (!trackNode.current && audioElement.current) {
+      trackNode.current = audioCtx.createMediaElementSource(audioElement.current);
     }
 
     return () => {};
@@ -171,11 +171,11 @@ const App = () => {
       onKeyDown={(e) => {
         if (e.keyCode !== 32 || e.target.tagName === 'BUTTON') return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        if (audioEl.current.paused) {
-          audioEl.current.play();
+        if (audioElement.current.paused) {
+          audioElement.current.play();
           setPlaying(true);
         } else {
-          audioEl.current.pause();
+          audioElement.current.pause();
           setPlaying(false);
         }
       }}
@@ -190,25 +190,25 @@ const App = () => {
         />
         <button
           className={
-            `playPause ${!audioEl.current || audioEl.current.paused ? "paused" : "playing"}`
+            `playPause ${!audioElement.current || audioElement.current.paused ? "paused" : "playing"}`
           }
           onClick={() => {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (audioEl.current.paused) {
-              audioEl.current.play();
+            if (audioElement.current.paused) {
+              audioElement.current.play();
               setPlaying(true);
             } else {
-              audioEl.current.pause();
+              audioElement.current.pause();
               setPlaying(false);
             }
           }}
         >
-          {!audioEl.current || audioEl.current.paused ? 'Play' : 'Pause'}
+          {!audioElement.current || audioElement.current.paused ? 'Play' : 'Pause'}
         </button>
       </div>
 
       <audio
-        ref={audioEl}
+        ref={audioElement}
         controls={false}
         id="audio"
         src={audioUrl}
