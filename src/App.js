@@ -1,86 +1,10 @@
 import { AudioContext } from './index.js';
 import useGain from './useGain.js';
 import useAnalyser from './useAnalyser.js';
+import createDrawFunction from './draw.js';
+import useWindowSize from './useWindowSize.js';
 
 const { useRef, useContext, useEffect, useState } = React;
-
-const createDrawFunction = ({
-  canvasCtx,
-  analyser,
-  dataArray,
-  bufferLength,
-  audioEl,
-}) => {
-  const draw = () => {
-    const width = canvasCtx.canvas.width;
-    const height = canvasCtx.canvas.height;
-    requestAnimationFrame(draw);
-
-    analyser.getByteFrequencyData(dataArray);
-
-    // CLEAR SCREEN
-    canvasCtx.fillStyle = 'black';
-    canvasCtx.fillRect(0, 0, width, height);
-
-    // FILL LOAD STATE
-    const loadProgress = audioEl.buffered.length
-      ? audioEl.buffered.end(0) / audioEl.duration
-      : 0;
-    canvasCtx.fillStyle = '#333';
-    canvasCtx.fillRect(0, 0, width * loadProgress, height);
-
-    // SET LINE STYLE
-    canvasCtx.lineWidth = 1;
-    canvasCtx.strokeStyle = 'white';
-
-    // BEGIN
-    canvasCtx.beginPath();
-
-    // CALCULATE BIN WIDTH
-    const sliceWidth = width * 1.0 / (bufferLength + 1);
-
-    // DRAW PLAYHEAD
-    const progress = audioEl.currentTime / audioEl.duration;
-    canvasCtx.moveTo(progress * width, 0);
-    canvasCtx.lineTo(progress * width, height);
-
-    // MOVE LINE TO STARTING POINT
-    let x = 0;
-    let y = height;
-    canvasCtx.moveTo(x, y);
-
-    // BEGIN LOOPING OVER BINS
-    for (var i = 0; i < bufferLength; i++) {
-      // CALCULATE NEXT Y VALUE
-      const v = dataArray[i] / 255.0;
-      const y = height - (v * height);
-
-      // DRAW LINE TO NEXT COORDINATES
-      canvasCtx.lineTo(x, y);
-
-      // DRAW TICK
-      canvasCtx.moveTo(x, height);
-      canvasCtx.lineTo(x, height - 5);
-
-      // DRAW CENTER LINE
-      canvasCtx.moveTo(0, height / 2);
-      canvasCtx.lineTo(width, height / 2);
-
-      canvasCtx.moveTo(x, y);
-
-      // ADVANCE X
-      x = ((Math.log(i + 1) / Math.log(bufferLength)) * width);
-    }
-
-    // DRAW LINE TO FINISHING POINT
-    canvasCtx.lineTo(width, height);
-
-    // STROKE
-    canvasCtx.stroke();
-  };
-
-  return draw;
-};
 
 const AGUST_URL = 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0';
 
@@ -88,6 +12,7 @@ const App = () => {
   const audioElement = useRef(null);
   const volumeElement = useRef(null);
   const canvasElement = useRef(null);
+
   const audioCtx = useContext(AudioContext);
   const trackNode = useRef(null);
   const [gainNode, setGainValue] = useGain(audioCtx);
@@ -99,19 +24,7 @@ const App = () => {
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
   const [playing, setPlaying] = useState(false);
 
-  useEffect(() => {
-    const resizeCanvas = () => {
-      const canvasCtx = canvasElement.current.getContext('2d');
-      canvasCtx.canvas.height = window.innerHeight;
-      canvasCtx.canvas.width = window.innerWidth;
-    };
-
-    window.addEventListener('resize', resizeCanvas);
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-    };
-  }, [canvasElement]);
+  const [windowHeight, windowWidth] = useWindowSize();
 
   useEffect(() => {
     if (!dataArray.current) {
@@ -120,8 +33,6 @@ const App = () => {
 
     if (!rafId.current && canvasElement.current && audioElement.current) {
       const canvasCtx = canvasElement.current.getContext('2d');
-      canvasCtx.canvas.height = window.innerHeight;
-      canvasCtx.canvas.width = window.innerWidth;
 
       rafId.current = window.requestAnimationFrame(createDrawFunction({
         analyser: analyserNode,
@@ -166,18 +77,22 @@ const App = () => {
     };
   }, []);
 
+  const togglePlayingState = () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioElement.current.paused) {
+      audioElement.current.play();
+      setPlaying(true);
+    } else {
+      audioElement.current.pause();
+      setPlaying(false);
+    }
+  };
+
   return (
     <div
       onKeyDown={(e) => {
         if (e.keyCode !== 32 || e.target.tagName === 'BUTTON') return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        if (audioElement.current.paused) {
-          audioElement.current.play();
-          setPlaying(true);
-        } else {
-          audioElement.current.pause();
-          setPlaying(false);
-        }
+        togglePlayingState();
       }}
       tabIndex="0"
     >
@@ -192,16 +107,7 @@ const App = () => {
           className={
             `playPause ${!audioElement.current || audioElement.current.paused ? "paused" : "playing"}`
           }
-          onClick={() => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (audioElement.current.paused) {
-              audioElement.current.play();
-              setPlaying(true);
-            } else {
-              audioElement.current.pause();
-              setPlaying(false);
-            }
-          }}
+          onClick={togglePlayingState}
         >
           {!audioElement.current || audioElement.current.paused ? 'Play' : 'Pause'}
         </button>
@@ -231,6 +137,8 @@ const App = () => {
         className="canvas"
         ref={canvasElement}
         id="canvas"
+        width={windowWidth}
+        height={windowHeight}
       ></canvas>
     </div>
   );
