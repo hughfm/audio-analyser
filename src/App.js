@@ -1,8 +1,9 @@
 import { AudioContext } from './index.js';
 import useGain from './useGain.js';
 import useAnalyser from './useAnalyser.js';
-import createDrawFunction from './draw.js';
 import useWindowSize from './useWindowSize.js';
+import FrequencyCanvas from './Canvas.js';
+import useFrequencyData from './useFrequencyData.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -11,45 +12,19 @@ const AGUST_URL = 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3
 const App = () => {
   const audioElement = useRef(null);
   const volumeElement = useRef(null);
-  const canvasElement = useRef(null);
 
   const audioCtx = useContext(AudioContext);
   const trackNode = useRef(null);
   const [gainNode, setGainValue] = useGain(audioCtx);
   const analyserNode = useAnalyser(audioCtx);
   const audioGraphConnected = useRef(false);
-  const dataArray = useRef(null);
-  const rafId = useRef(null);
   const searchParams = new URLSearchParams(window.location.search);
+
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
   const [playing, setPlaying] = useState(false);
 
   const [windowHeight, windowWidth] = useWindowSize();
-
-  useEffect(() => {
-    if (!dataArray.current) {
-      dataArray.current = new Uint8Array(analyserNode.frequencyBinCount);
-    }
-
-    if (!rafId.current && canvasElement.current && audioElement.current) {
-      const canvasCtx = canvasElement.current.getContext('2d');
-
-      rafId.current = window.requestAnimationFrame(createDrawFunction({
-        analyser: analyserNode,
-        canvasCtx,
-        width: canvasElement.current.width,
-        height: canvasElement.current.height,
-        dataArray: dataArray.current,
-        bufferLength: analyserNode.frequencyBinCount,
-        audioEl: audioElement.current,
-      }));
-    }
-
-    return () => {
-      window.cancelAnimationFrame(rafId.current);
-      rafId.current = null;
-    };
-  }, [dataArray, analyserNode, rafId, canvasElement, audioElement]);
+  const dataArray = useFrequencyData(analyserNode);
 
   useEffect(() => {
     if (!trackNode.current && audioElement.current) {
@@ -57,7 +32,7 @@ const App = () => {
     }
 
     return () => {};
-  });
+  }, [audioElement, trackNode, audioCtx]);
 
   useEffect(() => {
     if (!audioGraphConnected.current && trackNode.current) {
@@ -133,13 +108,11 @@ const App = () => {
         step=".01"
       />
 
-      <canvas
-        className="canvas"
-        ref={canvasElement}
-        id="canvas"
+      <FrequencyCanvas
         width={windowWidth}
         height={windowHeight}
-      ></canvas>
+        dataArray={dataArray}
+      />
     </div>
   );
 };
