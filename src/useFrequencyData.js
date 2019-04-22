@@ -12,11 +12,9 @@ export default function useFrequencyData(analyserNode) {
   };
 
   useEffect(() => {
-    console.log('running raf effect');
     const rafId = window.requestAnimationFrame(frame);
 
     return () => {
-      console.log('cleaning up raf effect');
       window.cancelAnimationFrame(rafId);
     };
   }, [analyserNode]);

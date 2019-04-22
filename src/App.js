@@ -1,9 +1,7 @@
 import { AudioContext } from './index.js';
 import useGain from './useGain.js';
 import useAnalyser from './useAnalyser.js';
-import useWindowSize from './useWindowSize.js';
-import FrequencyCanvas from './Canvas.js';
-import useFrequencyData from './useFrequencyData.js';
+import AnimatedFrequencyGraph from './AnimatedFrequencyGraph.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -22,9 +20,6 @@ const App = () => {
 
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
   const [playing, setPlaying] = useState(false);
-
-  const [windowHeight, windowWidth] = useWindowSize();
-  const dataArray = useFrequencyData(analyserNode);
 
   useEffect(() => {
     if (!trackNode.current && audioElement.current) {
@@ -108,11 +103,7 @@ const App = () => {
         step=".01"
       />
 
-      <FrequencyCanvas
-        width={windowWidth}
-        height={windowHeight}
-        dataArray={dataArray}
-      />
+      <AnimatedFrequencyGraph analyserNode={analyserNode} />
     </div>
   );
 };
