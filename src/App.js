@@ -2,6 +2,9 @@ import { AudioContext } from './index.js';
 import useGain from './useGain.js';
 import useAnalyser from './useAnalyser.js';
 import AnimatedFrequencyGraph from './AnimatedFrequencyGraph.js';
+import GraphBackdrop from './GraphBackdrop.js';
+import AnimatedAudioPlayhead from './AnimatedAudioPlayhead.js';
+import AnimatedAudioLoadState from './AnimatedAudioLoadState.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -103,6 +106,9 @@ const App = () => {
         step=".01"
       />
 
+      <GraphBackdrop binCount={analyserNode.frequencyBinCount} />
+      <AnimatedAudioPlayhead />
+      <AnimatedAudioLoadState />
       <AnimatedFrequencyGraph analyserNode={analyserNode} />
     </div>
   );

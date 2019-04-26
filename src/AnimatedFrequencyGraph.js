@@ -1,4 +1,4 @@
-import FrequencyCanvas from './Canvas.js';
+import FrequencyCanvas from './FrequencyCanvas.js';
 import useWindowSize from './useWindowSize.js';
 import useFrequencyData from './useFrequencyData.js';
 
