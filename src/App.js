@@ -107,7 +107,7 @@ const App = () => {
       />
 
       <GraphBackdrop binCount={analyserNode.frequencyBinCount} />
-      <AnimatedAudioPlayhead />
+      <AnimatedAudioPlayhead audioElement={audioElement} />
       <AnimatedAudioLoadState />
       <AnimatedFrequencyGraph analyserNode={analyserNode} />
     </div>
