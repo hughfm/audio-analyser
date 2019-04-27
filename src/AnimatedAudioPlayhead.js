@@ -13,12 +13,14 @@ const useAudioProgress = (audioElement) => {
   });
 
   useEffect(() => {
+    let rafId;
+
     const frame = () => {
       setAudioProgress(calculateProgress(audioElement.current));
-      return window.requestAnimationFrame(frame);
+      rafId = window.requestAnimationFrame(frame);
     };
 
-    const rafId = window.requestAnimationFrame(frame);
+    rafId = window.requestAnimationFrame(frame);
 
     return () => {
       window.cancelAnimationFrame(rafId);
