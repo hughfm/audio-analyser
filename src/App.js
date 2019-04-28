@@ -22,31 +22,24 @@ const App = () => {
 
   const audioBuffer = useExternalAudio(audioUrl, { context: audioCtx });
   const bufferSource = useRef();
-  if (!bufferSource.current) bufferSource.current = audioCtx.createBufferSource();
 
   useEffect(() => {
-    if (audioBuffer && bufferSource.current) {
-      bufferSource.current.buffer = audioBuffer;
-      bufferSource.current.start();
-      if (audioCtx.state === 'running') setPlaying(true);
-    }
+    bufferSource.current = audioCtx.createBufferSource();
+    bufferSource.current.buffer = audioBuffer;
+
+    bufferSource.current.connect(gainNode.current);
+    gainNode.current.connect(analyserNode.current);
+    analyserNode.current.connect(audioCtx.destination);
+
+    bufferSource.current.start();
+    setPlaying(audioCtx.state === 'running');
 
     return () => {
-      if (bufferSource.current) bufferSource.current.buffer = null;
+      bufferSource.current.disconnect();
+      gainNode.current.disconnect();
+      analyserNode.current.disconnect();
     };
-  }, [bufferSource, audioBuffer]);
-
-  useEffect(() => {
-    bufferSource.current && bufferSource.current.connect(gainNode);
-    gainNode.connect(analyserNode);
-    analyserNode.connect(audioCtx.destination);
-
-    return () => {
-      bufferSource.current && bufferSource.current.disconnect();
-      gainNode.disconnect();
-      analyserNode.disconnect();
-    };
-  }, [audioCtx, bufferSource, gainNode, analyserNode]);
+  }, [audioBuffer]);
 
   const togglePlayingState = () => {
     if (!playing) {
@@ -85,7 +78,7 @@ const App = () => {
 
       <input
         className="volumeControl"
-        value={gainNode.gain.value}
+        value={gainNode.current.gain.value}
         onChange={e => setGainValue(e.target.value)}
         ref={volumeElement}
         type="range"
@@ -104,7 +97,7 @@ const App = () => {
       />
 
       <AnimatedFrequencyGraph
-        analyserNode={analyserNode}
+        analyserNode={analyserNode.current}
         strokeStyle="blue"
         lineWidth={1}
       />

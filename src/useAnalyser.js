@@ -9,5 +9,5 @@ export default function useAnalyser(ctx) {
     analyserNodeRef.current.smoothingTimeConstant = 0.95;
   }
 
-  return analyserNodeRef.current;
-};
+  return analyserNodeRef;
+}

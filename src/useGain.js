@@ -5,13 +5,12 @@ export default function useGain(ctx) {
 
   if (!gainNodeRef.current) gainNodeRef.current = ctx.createGain();
 
-  const { current: gainNode } = gainNodeRef;
-  const [_, setGainValue] = useState(gainNode.gain.value);
+  const [gainValue, setGainValue] = useState(gainNodeRef.current.gain.value);
 
   return [
-    gainNode,
+    gainNodeRef,
     (value) => {
-      gainNode.gain.value = value;
+      gainNodeRef.current.gain.value = value;
       setGainValue(value);
     },
   ];
