@@ -5,6 +5,7 @@ import AnimatedFrequencyGraph from './AnimatedFrequencyGraph.js';
 import GraphBackdrop from './GraphBackdrop.js';
 import WaveformCanvas from './WaveformCanvas.js';
 import useExternalAudio from './useExternalAudio.js';
+import useBufferSource from './useBufferSource.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -21,12 +22,9 @@ const App = () => {
   const [playing, setPlaying] = useState(() => audioCtx.state === 'running');
 
   const audioBuffer = useExternalAudio(audioUrl, { context: audioCtx });
-  const bufferSource = useRef();
+  const bufferSource = useBufferSource(audioBuffer, { context: audioCtx });
 
   useEffect(() => {
-    bufferSource.current = audioCtx.createBufferSource();
-    bufferSource.current.buffer = audioBuffer;
-
     bufferSource.current.connect(gainNode.current);
     gainNode.current.connect(analyserNode.current);
     analyserNode.current.connect(audioCtx.destination);
