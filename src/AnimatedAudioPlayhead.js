@@ -30,7 +30,16 @@ const useAudioProgress = (audioElement) => {
   return audioProgress;
 };
 
-export default function AnimatedAudioPlayhead({ audioElement }) {
+AnimatedAudioPlayhead.defaultProps = {
+  strokeStyle: 'black',
+  lineWidth: 1,
+};
+
+export default function AnimatedAudioPlayhead({
+  audioElement,
+  strokeStyle,
+  lineWidth,
+}) {
   const canvas = useRef(null);
   const [windowHeight, windowWidth] = useWindowSize();
   const audioProgress = useAudioProgress(audioElement);
@@ -38,8 +47,8 @@ export default function AnimatedAudioPlayhead({ audioElement }) {
   useEffect(() => {
     const ctx = canvas.current.getContext('2d');
     ctx.clearRect(0, 0, windowWidth, windowHeight);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'black';
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = strokeStyle;
     ctx.beginPath();
 
     // DRAW PLAYHEAD

@@ -30,7 +30,14 @@ const useAudioBufferProgress = (audioElement) => {
   return audioBufferProgress;
 };
 
-export default function AnimatedAudioLoadState({ audioElement }) {
+AnimatedAudioLoadState.defaultProps = {
+  fillStyle: 'rgba(255, 255, 255, 0.2)',
+};
+
+export default function AnimatedAudioLoadState({
+  audioElement,
+  fillStyle,
+}) {
   const canvas = useRef(null);
   const [windowHeight, windowWidth] = useWindowSize();
   const audioBufferProgress = useAudioBufferProgress(audioElement);
@@ -40,7 +47,7 @@ export default function AnimatedAudioLoadState({ audioElement }) {
     ctx.clearRect(0, 0, windowWidth, windowHeight);
 
     // FILL LOAD STATE
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillStyle = fillStyle;
     ctx.fillRect(0, 0, windowWidth * audioBufferProgress, windowHeight);
   });
 

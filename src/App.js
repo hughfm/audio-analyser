@@ -5,6 +5,7 @@ import AnimatedFrequencyGraph from './AnimatedFrequencyGraph.js';
 import GraphBackdrop from './GraphBackdrop.js';
 import AnimatedAudioPlayhead from './AnimatedAudioPlayhead.js';
 import AnimatedAudioLoadState from './AnimatedAudioLoadState.js';
+import useWindowSize from './useWindowSize.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -13,6 +14,7 @@ const AGUST_URL = 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3
 const App = () => {
   const audioElement = useRef(null);
   const volumeElement = useRef(null);
+  const waveformCanvas = useRef(null);
 
   const audioCtx = useContext(AudioContext);
   const trackNode = useRef(null);
@@ -20,9 +22,61 @@ const App = () => {
   const analyserNode = useAnalyser(audioCtx);
   const audioGraphConnected = useRef(false);
   const searchParams = new URLSearchParams(window.location.search);
+  const [audioBuffer, setAudioBuffer] = useState(null);
+  const [windowHeight, windowWidth] = useWindowSize();
 
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
   const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    const request = new XMLHttpRequest();
+    request.open('GET', audioUrl);
+    request.responseType = 'arraybuffer';
+    request.onload = () => {
+      audioCtx.decodeAudioData(request.response, (buffer) => {
+        setAudioBuffer(buffer);
+      }, (error) => {
+        console.log('error decoding.', error);
+      });
+    };
+    request.send();
+  }, []);
+
+  const SAMPLES_TO_DRAW = 100000;
+
+  useEffect(() => {
+    const ctx = waveformCanvas.current.getContext('2d');
+
+    ctx.clearRect(0, 0, windowWidth, windowHeight);
+    ctx.lineWidth = windowWidth / SAMPLES_TO_DRAW;
+    ctx.strokeStyle = 'black';
+    ctx.beginPath();
+
+    if (audioBuffer) {
+      for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+        const data = audioBuffer.getChannelData(channel);
+
+        let x = 0;
+        let dataIndex, dataValue;
+
+        for (let sample = 0; sample < SAMPLES_TO_DRAW; sample++) {
+          dataIndex = ~~(data.length * (sample / SAMPLES_TO_DRAW));
+          dataValue = data[dataIndex];
+
+          ctx.moveTo(x, windowHeight / 2 * (channel + 1) - windowHeight / audioBuffer.numberOfChannels / 2);
+          ctx.lineTo(x, windowHeight / 2 * (channel + 1) - windowHeight / audioBuffer.numberOfChannels / 2 + dataValue * windowHeight / audioBuffer.numberOfChannels / 2);
+
+          x = (sample / SAMPLES_TO_DRAW) * windowWidth;
+        }
+      }
+
+      ctx.stroke();
+    }
+
+    return () => {
+      ctx.clearRect(0, 0, windowWidth, windowHeight);
+    };
+  }, [audioBuffer, windowHeight, windowWidth]);
 
   useEffect(() => {
     if (!trackNode.current && audioElement.current) {
@@ -106,10 +160,39 @@ const App = () => {
         step=".01"
       />
 
-      <GraphBackdrop binCount={analyserNode.frequencyBinCount} />
-      <AnimatedAudioLoadState audioElement={audioElement} />
-      <AnimatedAudioPlayhead audioElement={audioElement} />
-      <AnimatedFrequencyGraph analyserNode={analyserNode} />
+      {/* CANVAS LAYERS */}
+      <GraphBackdrop
+        binCount={analyserNode.frequencyBinCount}
+        binSpacing="log"
+        tickSize={5}
+        fillStyle="pink"
+        strokeStyle="red"
+        lineWidth={3}
+      />
+
+      <canvas
+        className="canvas"
+        ref={waveformCanvas}
+        width={windowWidth}
+        height={windowHeight}
+      ></canvas>
+
+      <AnimatedAudioLoadState
+        audioElement={audioElement}
+        fillStyle="rgba(0, 255, 255, 0.2)"
+      />
+
+      <AnimatedFrequencyGraph
+        analyserNode={analyserNode}
+        strokeStyle="blue"
+        lineWidth={5}
+      />
+
+      <AnimatedAudioPlayhead
+        audioElement={audioElement}
+        strokeStyle="yellow"
+        lineWidth={10}
+      />
     </div>
   );
 };

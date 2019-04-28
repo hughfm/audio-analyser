@@ -1,17 +1,24 @@
 const { useEffect, useRef } = React;
 
+FrequencyCanvas.defaultProps = {
+  strokeStyle: 'white',
+  lineWidth: 1,
+};
+
 export default function FrequencyCanvas({
   dataArray,
   width,
   height,
+  strokeStyle,
+  lineWidth,
 }) {
   const canvas = useRef(null);
 
   useEffect(() => {
     const ctx = canvas.current.getContext('2d');
     ctx.clearRect(0, 0, width, height);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'black';
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = strokeStyle;
     ctx.beginPath();
 
     // MOVE LINE TO STARTING POINT
