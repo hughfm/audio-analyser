@@ -1,3 +1,5 @@
+/* globals Uint8Array */
+
 const { useState, useEffect } = React;
 
 export default function useFrequencyData(analyserNode) {
@@ -20,4 +22,4 @@ export default function useFrequencyData(analyserNode) {
   }, [analyserNode]);
 
   return data.array;
-};
+}
