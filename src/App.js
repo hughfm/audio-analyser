@@ -6,6 +6,7 @@ import GraphBackdrop from './GraphBackdrop.js';
 import AnimatedAudioPlayhead from './AnimatedAudioPlayhead.js';
 import AnimatedAudioLoadState from './AnimatedAudioLoadState.js';
 import WaveformCanvas from './WaveformCanvas.js';
+import useExternalAudio from './useExternalAudio.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -21,26 +22,9 @@ const App = () => {
   const analyserNode = useAnalyser(audioCtx);
   const audioGraphConnected = useRef(false);
   const searchParams = new URLSearchParams(window.location.search);
-  const [audioBuffer, setAudioBuffer] = useState(null);
-
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
   const [playing, setPlaying] = useState(false);
-
-  useEffect(() => {
-    const request = new XMLHttpRequest();
-    request.open('GET', audioUrl);
-    request.responseType = 'arraybuffer';
-    request.onload = () => {
-      audioCtx.decodeAudioData(request.response, (buffer) => {
-        setAudioBuffer(buffer);
-      }, (error) => {
-        // eslint-disable-next-line no-console
-        console.log('error decoding.', error);
-      });
-    };
-    request.send();
-  }, []);
-
+  const audioBuffer = useExternalAudio(audioUrl, { context: audioCtx });
 
   useEffect(() => {
     if (!trackNode.current && audioElement.current) {
