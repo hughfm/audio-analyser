@@ -29,7 +29,7 @@ const App = () => {
     gainNode.current.connect(analyserNode.current);
     analyserNode.current.connect(audioCtx.destination);
 
-    bufferSource.current.start();
+    audioCtx.suspend();
     setPlaying(audioCtx.state === 'running');
 
     return () => {
@@ -37,16 +37,16 @@ const App = () => {
       gainNode.current.disconnect();
       analyserNode.current.disconnect();
     };
-  }, [audioBuffer]);
+  }, [bufferSource.current]);
 
   const togglePlayingState = () => {
     if (!playing) {
       audioCtx.resume();
-      setPlaying(true);
     } else {
       audioCtx.suspend();
-      setPlaying(false);
     }
+
+    setPlaying(!playing);
   };
 
   return (

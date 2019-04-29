@@ -6,6 +6,11 @@ export default function useBufferSource(audioBuffer, { context }) {
   useEffect(() => {
     bufferSource.current = context.createBufferSource();
     bufferSource.current.buffer = audioBuffer;
+    bufferSource.current.start();
+
+    return () => {
+      bufferSource.current.disconnect();
+    };
   }, [audioBuffer]);
 
   return bufferSource;
