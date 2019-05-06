@@ -6,6 +6,7 @@ import GraphBackdrop from './GraphBackdrop.js';
 import WaveformCanvas from './WaveformCanvas.js';
 import useExternalAudio from './useExternalAudio.js';
 import useBufferSource from './useBufferSource.js';
+import AudioPlayhead from './AudioPlayhead.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -22,7 +23,27 @@ const App = () => {
   const [playing, setPlaying] = useState(() => audioCtx.state === 'running');
 
   const audioBuffer = useExternalAudio(audioUrl, { context: audioCtx });
-  const bufferSource = useBufferSource(audioBuffer, { context: audioCtx });
+  const [bufferSource, bufferStartTime] = useBufferSource(audioBuffer, { context: audioCtx });
+
+  const [currentTime, setCurrentTime] = useState(0);
+
+  const duration = audioBuffer ? audioBuffer.duration : 0;
+  const audioProgress = currentTime / duration;
+
+  useEffect(() => {
+    let rafId;
+
+    const frame = () => {
+      rafId = window.requestAnimationFrame(frame);
+      setCurrentTime(audioCtx.currentTime - bufferStartTime.current);
+    };
+
+    rafId = window.requestAnimationFrame(frame);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+    };
+  }, [audioCtx]);
 
   useEffect(() => {
     bufferSource.current.connect(gainNode.current);
@@ -37,7 +58,7 @@ const App = () => {
       gainNode.current.disconnect();
       analyserNode.current.disconnect();
     };
-  }, [bufferSource.current]);
+  }, [bufferSource.current, audioBuffer]);
 
   const togglePlayingState = () => {
     if (!playing) {
@@ -70,7 +91,7 @@ const App = () => {
           }
           onClick={togglePlayingState}
         >
-          {playing ? 'Pause' : 'Play'}
+          {playing ? currentTime.toFixed(1) : 'Play'}
         </button>
       </div>
 
@@ -98,6 +119,10 @@ const App = () => {
         analyserNode={analyserNode.current}
         strokeStyle="blue"
         lineWidth={1}
+      />
+
+      <AudioPlayhead
+        progress={audioProgress}
       />
     </div>
   );
