@@ -7,6 +7,7 @@ import WaveformCanvas from './WaveformCanvas.js';
 import useExternalAudio from './useExternalAudio.js';
 import useBufferSource from './useBufferSource.js';
 import AudioPlayhead from './AudioPlayhead.js';
+import useColorScheme from './useColorScheme.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
@@ -26,6 +27,7 @@ const App = () => {
   const [bufferSource, bufferStartTime] = useBufferSource(audioBuffer, { context: audioCtx });
 
   const [currentTime, setCurrentTime] = useState(0);
+  const [colors, resetColors] = useColorScheme();
 
   const duration = audioBuffer ? audioBuffer.duration : 0;
   const audioProgress = currentTime / duration;
@@ -93,6 +95,10 @@ const App = () => {
         >
           {playing ? currentTime.toFixed(1) : 'Play'}
         </button>
+        <button
+          onClick={resetColors}
+          className="shuffle"
+        >Shuffle</button>
       </div>
 
       <input
@@ -107,7 +113,7 @@ const App = () => {
         step=".01"
       />
 
-      <GraphBackdrop fillStyle="pink" />
+      <GraphBackdrop fillStyle={colors.background} />
 
       <WaveformCanvas
         buffer={audioBuffer}
@@ -118,7 +124,7 @@ const App = () => {
 
       <AnimatedFrequencyGraph
         analyserNode={analyserNode.current}
-        strokeStyle="blue"
+        strokeStyle="linen"
         lineWidth={1}
       />
 

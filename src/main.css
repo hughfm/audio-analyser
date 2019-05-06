@@ -21,32 +21,37 @@
   right: 0;
   z-index: 10;
   display: flex;
-  padding: 0 24px;
+  padding: 0 48px 0 24px;
+}
+
+.topBar > * {
+  font-family: Montserrat;
+  font-size: 16px;
+  border: none;
+  margin-right: 24px;
+  text-align: center;
+  border-radius: 8px;
+  padding: 16px 24px;
+  color: white;
+}
+
+.topBar > *:last-child {
+  margin-right: 0;
 }
 
 .urlInput {
-  font-size: 16px;
-  font-family: Montserrat;
-  text-align: center;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 0 auto;
   display: block;
   background-color: rgba(255, 255, 255, 0.3);
-  color: white;
   flex: 1;
-  border: none;
+}
+
+.shuffle {
+  background: rgba(0, 0, 255, 0.3);
 }
 
 .playPause {
-  color: white;
-  font-size: 16px;
   font-family: Montserrat;
-  min-width: 120px;
-  padding: 0 24px;
-  margin: 0 24px;
-  border-radius: 8px;
-  border: none;
+  width: 100px;
 }
 
 .paused {
