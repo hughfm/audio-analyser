@@ -5,11 +5,13 @@ const { useRef, useEffect } = React;
 WaveformCanvas.defaultProps = {
   strokeStyle: 'black',
   resolution: 10000,
+  constant: 1,
 };
 export default function WaveformCanvas({
   buffer,
   strokeStyle,
   resolution,
+  constant,
 }) {
   const canvas = useRef(null);
   const [windowHeight, windowWidth] = useWindowSize();
@@ -34,7 +36,7 @@ export default function WaveformCanvas({
           dataValue = data[dataIndex];
 
           lineStart = windowHeight / 2 * (channel + 1) - windowHeight / buffer.numberOfChannels / 2;
-          lineLength = dataValue * windowHeight / buffer.numberOfChannels / 2;
+          lineLength = dataValue * windowHeight / buffer.numberOfChannels / 2 * constant;
           lineEnd = lineStart + lineLength;
 
           ctx.moveTo(x, lineStart);
@@ -50,7 +52,7 @@ export default function WaveformCanvas({
     return () => {
       ctx.clearRect(0, 0, windowWidth, windowHeight);
     };
-  }, [buffer, windowHeight, windowWidth]);
+  }, [buffer, windowHeight, windowWidth, constant]);
 
   return (
     <canvas

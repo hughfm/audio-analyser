@@ -113,6 +113,7 @@ const App = () => {
         buffer={audioBuffer}
         strokeStyle="white"
         resolution={10000}
+        constant={gainNode.current.gain.value}
       />
 
       <AnimatedFrequencyGraph
