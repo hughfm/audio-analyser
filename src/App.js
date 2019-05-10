@@ -23,7 +23,11 @@ const App = () => {
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
   const [playing, setPlaying] = useState(() => audioCtx.state === 'running');
 
-  const audioBuffer = useExternalAudio(audioUrl, { context: audioCtx });
+  const [
+    audioBuffer,
+    { loading, error, progress, decoding },
+  ] = useExternalAudio(audioUrl, { context: audioCtx });
+
   const [bufferSource, bufferStartTime] = useBufferSource(audioBuffer, { context: audioCtx });
 
   const [currentTime, setCurrentTime] = useState(0);
@@ -31,6 +35,21 @@ const App = () => {
 
   const duration = audioBuffer ? audioBuffer.duration : 0;
   const audioProgress = currentTime / duration;
+  const readyToPlay = audioBuffer && !error && !loading && !decoding;
+
+  let message;
+
+  if (loading) {
+    message = `${Math.round(progress * 100)}% Loaded.`;
+  } else if (decoding) {
+    message = 'Decoding.';
+  } else if (error) {
+    message = ':(';
+  } else if (playing) {
+    message = 'Playing.';
+  } else {
+    message = 'Ready.';
+  }
 
   useEffect(() => {
     let rafId;
@@ -81,20 +100,26 @@ const App = () => {
       tabIndex="0"
     >
       <div className="topBar">
-        <input
-          type="text"
-          value={audioUrl}
-          onChange={({ target }) => setAudioUrl(target.value)}
-          className="urlInput"
-        />
+        <div className="url">
+          <input
+            type="text"
+            value={audioUrl}
+            onChange={({ target }) => setAudioUrl(target.value)}
+            className="urlInput"
+          />
+          <span className="message">{message}</span>
+        </div>
+
         <button
           className={
             `playPause ${playing ? "playing" : "paused"}`
           }
           onClick={togglePlayingState}
+          disabled={!readyToPlay}
         >
           {playing ? currentTime.toFixed(1) : 'Play'}
         </button>
+
         <button
           onClick={resetColors}
           className="shuffle"

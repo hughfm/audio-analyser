@@ -7,9 +7,9 @@
 .volumeControl {
   z-index: 10;
   position: fixed;
-  top: 10%;
-  right: 16px;
-  height: 80%;
+  bottom: 10%;
+  right: 32px;
+  height: 40%;
   width: 16px;
   -webkit-appearance: slider-vertical;
 }
@@ -24,25 +24,61 @@
   padding: 0 48px 0 24px;
 }
 
-.topBar > * {
+.loading {
+  animation-name: spin;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@keyframes spin {
+  from {
+    transform:rotate(0deg);
+  }
+  to {
+    transform:rotate(360deg);
+  }
+}
+
+.topBar * {
   font-family: Montserrat;
   font-size: 16px;
-  border: none;
-  margin-right: 24px;
   text-align: center;
+  color: white;
+}
+
+.topBar > * {
   border-radius: 8px;
   padding: 16px 24px;
-  color: white;
+  margin-right: 24px;
+  border: none;
 }
 
 .topBar > *:last-child {
   margin-right: 0;
 }
 
+.url {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.3);
+  padding: 0;
+  display: flex;
+}
+
+.url > * {
+  vertical-align: middle;
+  padding: 16px 24px;
+}
+
 .urlInput {
   display: block;
-  background-color: rgba(255, 255, 255, 0.3);
+  border: none;
+  background: none;
   flex: 1;
+}
+
+.message {
+  width: 130px;
 }
 
 .shuffle {
@@ -52,6 +88,11 @@
 .playPause {
   font-family: Montserrat;
   width: 100px;
+}
+
+.playPause:disabled {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: gray;
 }
 
 .paused {
