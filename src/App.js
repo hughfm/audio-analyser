@@ -20,7 +20,7 @@ const App = () => {
   const [gainNode, setGainValue] = useGain(audioCtx);
   const analyserNode = useAnalyser(audioCtx);
   const searchParams = new URLSearchParams(window.location.search);
-  const [audioUrl, setAudioUrl] = useState(searchParams.get('track') || AGUST_URL);
+  const [audioUrl, setAudioUrl] = useState(searchParams.get('track') ? decodeURIComponent(searchParams.get('track')) : AGUST_URL);
   const [playing, setPlaying] = useState(() => audioCtx.state === 'running');
 
   const [
@@ -104,7 +104,12 @@ const App = () => {
           <input
             type="text"
             value={audioUrl}
-            onChange={({ target }) => setAudioUrl(target.value)}
+            onChange={({ target }) => {
+              setAudioUrl(target.value);
+              const url = new URL(window.location);
+              url.searchParams.set('track', encodeURIComponent(target.value));
+              history.replaceState({}, '', url.toString());
+            }}
             className="urlInput"
           />
           <span className="message">{message}</span>
