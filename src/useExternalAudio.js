@@ -12,6 +12,7 @@ export default function useExternalAudio(url, { context }) {
     setProgress(0);
     setError(null);
     setAudioBuffer(null);
+    setDecoding(false);
 
     const request = new XMLHttpRequest();
     request.open('GET', url);
@@ -22,13 +23,24 @@ export default function useExternalAudio(url, { context }) {
     });
 
     request.addEventListener('load', () => {
+      if (request.status < 200 || request.status >= 300) {
+        setError(new Error(`The HTTP request failed with status ${request.status}`));
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
       setDecoding(true);
 
-      context.decodeAudioData(request.response)
-        .then((buffer) => setAudioBuffer(buffer))
-        .catch((error) => setError(error))
-        .then(() => setDecoding(false));
+      context.decodeAudioData(request.response, (buffer) => {
+        /* success */
+        setAudioBuffer(buffer);
+        setDecoding(false);
+      }, (error) => {
+        /* error */
+        setError(error);
+        setDecoding(false);
+      });
     });
 
     request.addEventListener('error', (e) => {
