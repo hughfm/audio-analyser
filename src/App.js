@@ -4,14 +4,28 @@ import useAnalyser from './useAnalyser.js';
 import AnimatedFrequencyGraph from './AnimatedFrequencyGraph.js';
 import GraphBackdrop from './GraphBackdrop.js';
 import WaveformCanvas from './WaveformCanvas.js';
-import useExternalAudio from './useExternalAudio.js';
+import useExternalAudio, { LOADING, DECODING, WAITING } from './useExternalAudio.js';
 import useBufferSource from './useBufferSource.js';
-import AudioPlayhead from './AudioPlayhead.js';
+import AnimatedAudioPlayhead from './AudioPlayhead.js';
 import useColorScheme from './useColorScheme.js';
 
 const { useRef, useContext, useEffect, useState } = React;
 
 const AGUST_URL = 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0';
+
+const statusMessage = (state, error, progress, playing) => {
+  if (error) return 'Error.';
+  if (playing) return 'Playing.';
+
+  switch (state) {
+    case LOADING:
+      return `${progress}% Loaded.`;
+    case DECODING:
+      return 'Decoding.';
+    default:
+      return 'Ready.';
+  }
+};
 
 const App = () => {
   const volumeElement = useRef(null);
@@ -22,49 +36,24 @@ const App = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') ? decodeURIComponent(searchParams.get('track')) : AGUST_URL);
   const [playing, setPlaying] = useState(() => audioCtx.state === 'running');
+  // const [on, setOn] = useState(false);
 
   const [
     audioBuffer,
-    { loading, error, progress, decoding },
+    { state, error, progress },
   ] = useExternalAudio(audioUrl, { context: audioCtx });
 
-  const [bufferSource, bufferStartTime] = useBufferSource(audioBuffer, { context: audioCtx });
+  const [bufferSource, bufferStartTime] = useBufferSource(audioBuffer, {
+    context: audioCtx,
+    onEnd: () => {
+      audioCtx.suspend();
+      setPlaying(false);
+    },
+  });
 
-  const [currentTime, setCurrentTime] = useState(0);
   const [colors, resetColors] = useColorScheme();
-
   const duration = audioBuffer ? audioBuffer.duration : 0;
-  const audioProgress = currentTime / duration;
-  const readyToPlay = audioBuffer && !error && !loading && !decoding;
-
-  let message;
-
-  if (loading) {
-    message = `${Math.round(progress * 100)}% Loaded.`;
-  } else if (decoding) {
-    message = 'Decoding.';
-  } else if (error) {
-    message = ':(';
-  } else if (playing) {
-    message = 'Playing.';
-  } else {
-    message = 'Ready.';
-  }
-
-  useEffect(() => {
-    let rafId;
-
-    const frame = () => {
-      rafId = window.requestAnimationFrame(frame);
-      setCurrentTime(audioCtx.currentTime - bufferStartTime.current);
-    };
-
-    rafId = window.requestAnimationFrame(frame);
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-    };
-  }, [audioCtx]);
+  const readyToPlay = audioBuffer && !error && state === WAITING;
 
   useEffect(() => {
     bufferSource.current.connect(gainNode.current);
@@ -112,7 +101,7 @@ const App = () => {
             }}
             className="urlInput"
           />
-          <span className="message">{message}</span>
+          <span className="message">{statusMessage(state, error, progress, playing)}</span>
         </div>
 
         <button
@@ -122,7 +111,7 @@ const App = () => {
           onClick={togglePlayingState}
           disabled={!readyToPlay}
         >
-          {playing ? currentTime.toFixed(1) : 'Play'}
+          {playing ? 'Stop' : 'Play'}
         </button>
 
         <button
@@ -158,8 +147,10 @@ const App = () => {
         lineWidth={1}
       />
 
-      <AudioPlayhead
-        progress={audioProgress}
+      <AnimatedAudioPlayhead
+        context={audioCtx}
+        startTime={bufferStartTime.current}
+        duration={duration}
       />
     </div>
   );

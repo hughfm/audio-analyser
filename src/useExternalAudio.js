@@ -1,66 +1,78 @@
 const { useEffect, useState } = React;
 
+export const WAITING = 'waiting';
+export const LOADING = 'loading';
+export const DECODING = 'decoding';
+
 export default function useExternalAudio(url, { context }) {
   const [audioBuffer, setAudioBuffer] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [decoding, setDecoding] = useState(false);
+  const [state, setState] = useState(WAITING);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    setLoading(true);
-    setProgress(0);
-    setError(null);
-    setAudioBuffer(null);
-    setDecoding(false);
-
     const request = new XMLHttpRequest();
     request.open('GET', url);
     request.responseType = 'arraybuffer';
 
-    request.addEventListener('progress', (e) => {
-      setProgress(e.loaded / e.total);
+    request.addEventListener('abort', () => {
+      setState(WAITING);
+      setError(new Error('Request for audio was aborted.'));
+      setProgress(0);
+    });
+
+    request.addEventListener('error', () => {
+      setState(WAITING);
+      setError(new Error('Request for audio was aborted.'));
+      setProgress(0);
     });
 
     request.addEventListener('load', () => {
       if (request.status < 200 || request.status >= 300) {
         setError(new Error(`The HTTP request failed with status ${request.status}`));
-        setLoading(false);
         return;
       }
 
-      setLoading(false);
-      setDecoding(true);
-
+      setError(null);
+      setState(DECODING);
       context.decodeAudioData(request.response, (buffer) => {
         /* success */
         setAudioBuffer(buffer);
-        setDecoding(false);
+        setState(WAITING);
+        setError(null);
       }, (error) => {
         /* error */
+        setAudioBuffer(null);
+        setState(WAITING);
         setError(error);
-        setDecoding(false);
       });
     });
 
-    request.addEventListener('error', (e) => {
-      setLoading(false);
-      setError(e);
+    request.addEventListener('loadend', () => {
+      // setState(WAITING);
     });
 
-    request.addEventListener('abort', () => {
-      setLoading(false);
+    request.addEventListener('loadstart', () => {
+      setState(LOADING);
+      setProgress(0);
+      setError(null);
+    });
+
+    request.addEventListener('progress', (event) => {
+      setProgress(Math.round(event.loaded / event.total * 100));
     });
 
     request.send();
 
     return () => {
-      if (loading) request.abort();
+      setError(null);
       setAudioBuffer(null);
+      if (state === LOADING) request.abort();
+      setState(WAITING);
     };
   }, [url, context]);
 
-  const metadata = { loading, error, progress, decoding };
+  const metadata = { state, error, progress };
 
   return [audioBuffer, metadata];
 }

@@ -1,3 +1,4 @@
+import useAnimatedAudioTime from './useAudioTime.js';
 import useWindowSize from './useWindowSize.js';
 
 const { useRef, useEffect } = React;
@@ -7,7 +8,7 @@ AudioPlayhead.defaultProps = {
   lineWidth: 1,
 };
 
-export default function AudioPlayhead({
+function AudioPlayhead({
   strokeStyle,
   lineWidth,
   progress,
@@ -36,5 +37,14 @@ export default function AudioPlayhead({
       width={windowWidth}
       height={windowHeight}
     ></canvas>
+  );
+}
+
+export default function AnimatedFrequencyGraph({ context, startTime, duration }) {
+  const currentTime = useAnimatedAudioTime(context) - startTime;
+  const progress = currentTime / duration;
+
+  return (
+    <AudioPlayhead progress={progress} />
   );
 }
