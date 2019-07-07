@@ -1,49 +1,48 @@
-import { AudioContext } from './index.js';
 import useGain from './useGain.js';
 import useAnalyser from './useAnalyser.js';
 import AnimatedFrequencyGraph from './AnimatedFrequencyGraph.js';
 import GraphBackdrop from './GraphBackdrop.js';
 import WaveformCanvas from './WaveformCanvas.js';
-import useExternalAudio, { LOADING, DECODING, WAITING } from './useExternalAudio.js';
+import useExternalAudio from './useExternalAudio.js';
 import useBufferSource from './useBufferSource.js';
 import AnimatedAudioPlayhead from './AudioPlayhead.js';
 import useColorScheme from './useColorScheme.js';
+import useConnectedAudioGraph from './useConnectedAudioGraph.js';
+import ControlBar from './ControlBar.js';
+import useAudioContext from './useAudioContext.js';
 
-const { useRef, useContext, useEffect, useState } = React;
+const { useRef, useState } = React;
 
 const AGUST_URL = 'https://dl.dropboxusercontent.com/s/mqtdw1b7u02j9sf/agust.mp3?dl=0';
 
-const statusMessage = (state, error, progress, playing) => {
-  if (error) return 'Error.';
-  if (playing) return 'Playing.';
-
-  switch (state) {
-    case LOADING:
-      return `${progress}% Loaded.`;
-    case DECODING:
-      return 'Decoding.';
-    default:
-      return 'Ready.';
-  }
-};
-
 const App = () => {
-  const volumeElement = useRef(null);
+  const audioCtx = useAudioContext();
 
-  const audioCtx = useContext(AudioContext);
-  const [gainNode, setGainValue] = useGain(audioCtx);
-  const analyserNode = useAnalyser(audioCtx);
   const searchParams = new URLSearchParams(window.location.search);
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') ? decodeURIComponent(searchParams.get('track')) : AGUST_URL);
   const [playing, setPlaying] = useState(() => audioCtx.state === 'running');
-  // const [on, setOn] = useState(false);
+  const volumeElement = useRef(null);
+  const [colors, resetColors] = useColorScheme();
+  const [analyserSize, setAnalyserSize] = useState(Math.pow(2, 11));
+  const [analyserSmoothing, setAnalyserSmoothing] = useState(0.95);
 
+  // Load audio file
   const [
     audioBuffer,
     { state, error, progress },
   ] = useExternalAudio(audioUrl, { context: audioCtx });
 
-  const [bufferSource, bufferStartTime] = useBufferSource(audioBuffer, {
+  const duration = audioBuffer ? audioBuffer.duration : 0;
+
+  // Create audio nodes
+  const {
+    node: gainNode,
+    value: gainValue,
+    setValue: setGainValue,
+  } = useGain(1, { context: audioCtx });
+
+  const { node: analyserNode } = useAnalyser(analyserSize, { context: audioCtx, smoothing: analyserSmoothing });
+  const { node: bufferSource, startTime: bufferStartTime } = useBufferSource(audioBuffer, {
     context: audioCtx,
     onEnd: () => {
       audioCtx.suspend();
@@ -51,24 +50,12 @@ const App = () => {
     },
   });
 
-  const [colors, resetColors] = useColorScheme();
-  const duration = audioBuffer ? audioBuffer.duration : 0;
-  const readyToPlay = audioBuffer && !error && state === WAITING;
-
-  useEffect(() => {
-    bufferSource.current.connect(gainNode.current);
-    gainNode.current.connect(analyserNode.current);
-    analyserNode.current.connect(audioCtx.destination);
-
-    audioCtx.suspend();
-    setPlaying(audioCtx.state === 'running');
-
-    return () => {
-      bufferSource.current.disconnect();
-      gainNode.current.disconnect();
-      analyserNode.current.disconnect();
-    };
-  }, [bufferSource.current, audioBuffer]);
+  // Connect audio graph
+  useConnectedAudioGraph({
+    context: audioCtx,
+    source: bufferSource,
+    nodes: [gainNode, analyserNode],
+  });
 
   const togglePlayingState = () => {
     if (!playing) {
@@ -88,41 +75,53 @@ const App = () => {
       }}
       tabIndex="0"
     >
-      <div className="topBar">
-        <div className="url">
-          <input
-            type="text"
-            value={audioUrl}
-            onChange={({ target }) => {
-              setAudioUrl(target.value);
-              const url = new URL(window.location);
-              url.searchParams.set('track', encodeURIComponent(target.value));
-              history.replaceState({}, '', url.toString());
-            }}
-            className="urlInput"
-          />
-          <span className="message">{statusMessage(state, error, progress, playing)}</span>
-        </div>
+      <ControlBar
+        audioCtx={audioCtx}
+        url={audioUrl}
+        setUrl={setAudioUrl}
+        state={state}
+        error={error}
+        progress={progress}
+        playing={playing}
+        audioBuffer={audioBuffer}
+        togglePlayingState={togglePlayingState}
+        shuffle={resetColors}
+      />
 
-        <button
-          className={
-            `playPause ${playing ? "playing" : "paused"}`
-          }
-          onClick={togglePlayingState}
-          disabled={!readyToPlay}
-        >
-          {playing ? 'Stop' : 'Play'}
-        </button>
+      <div className="analyserSizeSelector">
+        {
+          [6, 7, 8, 9, 10, 11, 12]
+            .map(num => Math.pow(2, num))
+            .map(size => (
+              <button
+                key={size}
+                onClick={() => setAnalyserSize(size)}
+                className={analyserSize === size ? "active" : ""}
+              >
+                {size}
+              </button>
+            ))
+        }
+      </div>
 
-        <button
-          onClick={resetColors}
-          className="shuffle"
-        >Shuffle</button>
+      <div className="analyserSmoothingSelector">
+        {
+          [0.05, 0.25, 0.5, 0.75, 0.95]
+            .map(value => (
+              <button
+                key={value}
+                onClick={() => setAnalyserSmoothing(value)}
+                className={analyserSmoothing === value ? "active" : ""}
+              >
+                {value}
+              </button>
+            ))
+        }
       </div>
 
       <input
         className="volumeControl"
-        value={gainNode.current.gain.value}
+        value={gainValue}
         onChange={e => setGainValue(e.target.value)}
         ref={volumeElement}
         type="range"
@@ -138,18 +137,18 @@ const App = () => {
         buffer={audioBuffer}
         strokeStyle="white"
         resolution={10000}
-        constant={gainNode.current.gain.value}
+        constant={gainValue}
       />
 
       <AnimatedFrequencyGraph
-        analyserNode={analyserNode.current}
+        analyserNode={analyserNode}
         strokeStyle="linen"
         lineWidth={1}
       />
 
       <AnimatedAudioPlayhead
         context={audioCtx}
-        startTime={bufferStartTime.current}
+        startTime={bufferStartTime}
         duration={duration}
       />
     </div>

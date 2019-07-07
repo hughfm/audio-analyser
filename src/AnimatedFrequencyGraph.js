@@ -7,6 +7,8 @@ export default function AnimatedFrequencyGraph({
   strokeStyle,
   lineWidth,
 }) {
+  if (!analyserNode) return null;
+
   const [windowHeight, windowWidth] = useWindowSize();
   const dataArray = useFrequencyData(analyserNode);
 

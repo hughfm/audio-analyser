@@ -1,13 +1,17 @@
-const { useRef } = React;
+const { useState, useEffect } = React;
 
-export default function useAnalyser(ctx) {
-  const analyserNodeRef = useRef();
+const DEFAULT_SIZE = Math.pow(2, 11);
 
-  if (!analyserNodeRef.current) {
-    analyserNodeRef.current = ctx.createAnalyser();
-    analyserNodeRef.current.fftSize = Math.pow(2, 11);
-    analyserNodeRef.current.smoothingTimeConstant = 0.95;
-  }
+export default function useAnalyser(size = DEFAULT_SIZE, { context, smoothing = 0.95 }) {
+  const [node, setNode] = useState(null);
 
-  return analyserNodeRef;
+  useEffect(() => {
+    const newNode = context.createAnalyser();
+    newNode.fftSize = size;
+    newNode.smoothingTimeConstant = smoothing;
+
+    setNode(newNode);
+  }, [context, size, smoothing]);
+
+  return { node };
 }

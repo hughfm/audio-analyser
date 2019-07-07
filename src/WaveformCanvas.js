@@ -7,6 +7,7 @@ WaveformCanvas.defaultProps = {
   resolution: 10000,
   constant: 1,
 };
+
 export default function WaveformCanvas({
   buffer,
   strokeStyle,

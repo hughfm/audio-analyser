@@ -7,14 +7,16 @@ export default function useFrequencyData(analyserNode) {
     array: new Uint8Array(analyserNode.frequencyBinCount)
   }));
 
-  const frame = () => {
-    analyserNode.getByteFrequencyData(data.array);
-    setData({ array: data.array });
-    return window.requestAnimationFrame(frame);
-  };
-
   useEffect(() => {
-    const rafId = window.requestAnimationFrame(frame);
+    let rafId;
+
+    const frame = () => {
+      analyserNode.getByteFrequencyData(data.array);
+      setData({ array: data.array });
+      rafId = window.requestAnimationFrame(frame);
+    };
+
+    rafId = window.requestAnimationFrame(frame);
 
     return () => {
       window.cancelAnimationFrame(rafId);

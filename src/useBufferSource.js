@@ -1,25 +1,24 @@
-const { useEffect, useRef } = React;
+const { useEffect, useState } = React;
 
 export default function useBufferSource(audioBuffer, { context, onEnd }) {
-  const bufferSource = useRef();
-  const startTime = useRef(0);
+  const [node, setNode] = useState(null);
+  const [startTime, setStartTime] = useState(null);
 
   useEffect(() => {
-    bufferSource.current = context.createBufferSource();
-    bufferSource.current.buffer = audioBuffer;
+    if (context && audioBuffer && (!node || node.buffer !== audioBuffer)) {
+      const newNode = context.createBufferSource();
 
-    bufferSource.current.onended = () => {
-      onEnd();
-    };
+      newNode.buffer = audioBuffer;
 
-    bufferSource.current.start();
-    startTime.current = context.currentTime;
+      if (typeof onEnd === 'function') {
+        newNode.onended = () => onEnd();
+      }
 
-    return () => {
-      bufferSource.current.stop();
-      bufferSource.current.disconnect();
-    };
-  }, [audioBuffer]);
+      setNode(newNode);
+      setStartTime(context.currentTime);
+      newNode.start();
+    }
+  }, [context, audioBuffer, onEnd]);
 
-  return [bufferSource, startTime];
+  return { node, startTime };
 }

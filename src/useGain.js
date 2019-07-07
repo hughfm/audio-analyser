@@ -1,17 +1,23 @@
-const { useRef, useState } = React;
+const { useEffect, useState } = React;
 
-export default function useGain(ctx) {
-  const gainNodeRef = useRef();
+export default function useGain(initialValue = 1, { context }) {
+  const [node, setNode] = useState(null);
+  const [value, setValue] = useState(initialValue);
 
-  if (!gainNodeRef.current) gainNodeRef.current = ctx.createGain();
+  useEffect(() => {
+    if (context) {
+      const newNode = context.createGain();
+      newNode.gain.value = value;
+      setNode(newNode);
+    }
+  }, [context, initialValue]);
 
-  const [gainValue, setGainValue] = useState(gainNodeRef.current.gain.value);
-
-  return [
-    gainNodeRef,
-    (value) => {
-      gainNodeRef.current.gain.value = value;
-      setGainValue(value);
+  return {
+    node,
+    value,
+    setValue: (value) => {
+      node.gain.value = value;
+      setValue(value);
     },
-  ];
+  }
 }

@@ -14,6 +14,8 @@ export default function useExternalAudio(url, { context }) {
     const request = new XMLHttpRequest();
     request.open('GET', url);
     request.responseType = 'arraybuffer';
+    setError(null);
+    context.suspend();
 
     request.addEventListener('abort', () => {
       setState(WAITING);
