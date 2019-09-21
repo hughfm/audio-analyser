@@ -8,20 +8,13 @@ export default function useFrequencyData(analyserNode) {
   }));
 
   useEffect(() => {
-    let rafId;
-
-    const frame = () => {
+    const rafId = requestAnimationFrame(() => {
       analyserNode.getByteFrequencyData(data.array);
       setData({ array: data.array });
-      rafId = window.requestAnimationFrame(frame);
-    };
+    });
 
-    rafId = window.requestAnimationFrame(frame);
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-    };
-  }, [analyserNode]);
+    return () => cancelAnimationFrame(rafId);
+  }, [analyserNode, data]);
 
   return data.array;
 }

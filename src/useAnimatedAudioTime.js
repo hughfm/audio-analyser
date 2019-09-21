@@ -4,19 +4,12 @@ export default function useAudioTime(context) {
   const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
-    let rafId;
-
-    const frame = () => {
-      rafId = window.requestAnimationFrame(frame);
+    const rafId = requestAnimationFrame(() => {
       setCurrentTime(context.currentTime);
-    };
+    });
 
-    rafId = window.requestAnimationFrame(frame);
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-    };
-  }, [context]);
+    return () => cancelAnimationFrame(rafId);
+  }, [context currentTime]);
 
   return currentTime;
 }
