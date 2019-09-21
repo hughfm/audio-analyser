@@ -1,5 +1,7 @@
 # Audio Analyser
 
+![Screenshot](./docs/screenshot.png)
+
 This is a little web app for playing and visualising audio files.
 
 By default, it will play my version of the superb piece [Ágúst](https://www.youtube.com/watch?v=LYvlmiwEP9M) by Ólafur Arnalds.
