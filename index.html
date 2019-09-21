@@ -10,5 +10,11 @@
   </head>
   <body>
     <div id="app"></div>
+    <noscript>
+      Sorry, a modern browser with Javascript enabled is required to run this web app.
+    </noscript>
+    <script nomodule>
+      document.body.innerHTML = 'Sorry, a modern browser that supports ES2015 modules is required to use this web app.';
+    </script>
   </body>
 </html>
