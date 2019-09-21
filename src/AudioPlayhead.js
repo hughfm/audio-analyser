@@ -1,4 +1,4 @@
-import useAnimatedAudioTime from './useAudioTime.js';
+import useAnimatedAudioTime from './useAnimatedAudioTime.js';
 import useWindowSize from './useWindowSize.js';
 
 const { useRef, useEffect } = React;
@@ -40,7 +40,7 @@ function AudioPlayhead({
   );
 }
 
-export default function AnimatedFrequencyGraph({ context, startTime, duration }) {
+export default function AnimatedAudioPlayhead({ context, startTime, duration }) {
   const currentTime = useAnimatedAudioTime(context) - startTime;
   const progress = currentTime / duration;
 

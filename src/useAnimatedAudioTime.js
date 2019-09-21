@@ -1,15 +1,18 @@
-const { useEffect, useState } = React;
+const { useEffect, useState, useRef } = React;
 
 export default function useAudioTime(context) {
   const [currentTime, setCurrentTime] = useState(0);
+  const rafId = useRef();
 
   useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
+    const frame = () => {
       setCurrentTime(context.currentTime);
-    });
+      rafId.current = requestAnimationFrame(frame);
+    };
 
-    return () => cancelAnimationFrame(rafId);
-  }, [context currentTime]);
+    rafId.current = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(rafId.current);
+  }, [context]);
 
   return currentTime;
 }

@@ -1,6 +1,6 @@
 import useWindowSize from './useWindowSize.js';
 
-const { useRef, useState, useEffect } = React;
+const { useRef, useState, useEffect, useRef } = React;
 
 const calculateProgress = (audioElement) => {
   if (!audioElement || !audioElement.duration || !audioElement.buffered.length) return 0;
@@ -12,13 +12,17 @@ const useAudioBufferProgress = (audioElement) => {
     return calculateProgress(audioElement.current);
   });
 
-  useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
-      setAudioBufferProgress(calculateProgress(audioElement.current));
-    });
+  const rafId = useRef();
 
-    return () => cancelAnimationFrame(rafId);
-  }, [audioElement, audioBufferProgress]);
+  useEffect(() => {
+    const frame = () => {
+      setAudioBufferProgress(calculateProgress(audioElement.current));
+      rafId.current = requestAnimationFrame(frame);
+    };
+
+    rafId.current = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(rafId.current);
+  }, [audioElement]);
 
   return audioBufferProgress;
 };
