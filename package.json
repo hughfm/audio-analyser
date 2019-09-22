@@ -6,7 +6,10 @@
   "scripts": {
     "build": "babel src -d build",
     "develop": "babel src -d build --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf build",
+    "deploy": "npm run clean && npm run build && now",
+    "deploy:prod": "npm run clean && npm run build && now --prod"
   },
   "keywords": [],
   "author": "",
