@@ -4,7 +4,7 @@ This is a little web app for playing and visualising audio files.
 
 ![Screenshot](./docs/screenshot.png)
 
-By default, it will play my version of the superb piece [Ágúst](https://www.youtube.com/watch?v=LYvlmiwEP9M) by Ólafur Arnalds.
+By default, it will play my recording of the superb piece [Ágúst](https://www.youtube.com/watch?v=LYvlmiwEP9M) by Ólafur Arnalds.
 
 Paste a URL to any audio file on the web into the text input at the top to load and play it.
 

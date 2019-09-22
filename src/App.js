@@ -19,6 +19,7 @@ const App = () => {
   const audioCtx = useAudioContext();
 
   const searchParams = new URLSearchParams(window.location.search);
+  const trackInUrl = !!searchParams.get('track');
   const [audioUrl, setAudioUrl] = useState(searchParams.get('track') ? decodeURIComponent(searchParams.get('track')) : AGUST_URL);
   const [playing, setPlaying] = useState(() => audioCtx.state === 'running');
   const volumeElement = useRef(null);
@@ -66,6 +67,8 @@ const App = () => {
 
     setPlaying(!playing);
   };
+
+  const [showInstructions, setShowInstructions] = useState(true);
 
   return (
     <div
@@ -151,9 +154,28 @@ const App = () => {
         startTime={bufferStartTime}
         duration={duration}
       />
+
       <div className="credits">
         Created by <a href="https://www.hughfm.com">Hugh Middleton</a>. View the code on <a href="https://www.github.com/hughfm/audio-analyser">GitHub</a>.
       </div>
+
+      {
+        showInstructions && !trackInUrl && (
+          <div className="instructions">
+            <p>Welcome.</p>
+            <p>
+              Paste a URL to any audio file on the web into the text input at the top to load and play it.
+            </p>
+            <p>
+              Once you have loaded in a new track, copy paste the URL from your browser's address bar to share it.
+            </p>
+            <p>
+              By default, it will play my recording of the superb piece <a href="https://www.youtube.com/watch?v=LYvlmiwEP9M">Ágúst</a> by Ólafur Arnalds.
+            </p>
+            <button onClick={() => setShowInstructions(false)}>Start</button>
+          </div>
+        )
+      }
     </div>
   );
 };
