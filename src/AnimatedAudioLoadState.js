@@ -1,6 +1,6 @@
 import useWindowSize from './useWindowSize.js';
 
-const { useRef, useState, useEffect, useRef } = React;
+const { useRef, useState, useEffect } = React;
 
 const calculateProgress = (audioElement) => {
   if (!audioElement || !audioElement.duration || !audioElement.buffered.length) return 0;
