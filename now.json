@@ -2,5 +2,17 @@
   "name": "waveform",
   "version": 2,
   "alias": ["waveform.hughfm.com"],
-  "scope": "hughfmiddleton@gmail.com"
+  "scope": "hughfmiddleton@gmail.com",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@now/static-build",
+      "config": { "distDir": "build" }
+    },
+    { "src": "index.html", "use": "@now/static" },
+    { "src": "src/main.css", "use": "@now/static" }
+  ],
+  "routes": [
+    { "src": "^/build/(.*).js", "dest": "$1.js" }
+  ]
 }

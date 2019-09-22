@@ -1,6 +1,5 @@
-package.*
 node_modules
 README.md
 audio
 docs
-.babelrc
+build
