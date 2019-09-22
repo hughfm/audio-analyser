@@ -151,6 +151,9 @@ const App = () => {
         startTime={bufferStartTime}
         duration={duration}
       />
+      <div className="credits">
+        Created by <a href="https://www.hughfm.com">Hugh Middleton</a>. View the code on <a href="https://www.github.com/hughfm/audio-analyser">GitHub</a>.
+      </div>
     </div>
   );
 };
