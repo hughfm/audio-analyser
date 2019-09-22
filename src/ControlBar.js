@@ -57,7 +57,7 @@ const ControlBar = ({
       <button
         onClick={shuffle}
         className="shuffle"
-      >Shuffle</button>
+      >Paint</button>
     </div>
   );
 };
